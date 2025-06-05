@@ -1,0 +1,19 @@
+{
+  "name": "reya",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@types/node": "^22.15.29",
+    "avsc": "^5.7.7"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
