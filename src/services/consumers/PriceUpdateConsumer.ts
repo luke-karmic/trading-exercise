@@ -26,13 +26,6 @@ export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
       timestamp: new Date(update.timestamp).toISOString()
     });
 
-<<<<<<< HEAD
-    // Check for stop-loss triggers
-    const triggeredOrders = this.stopLossManager.checkPrice(update.symbol as Symbol, update.price);
-
-    // Emit stop-loss events for each triggered order
-    triggeredOrders.forEach(order => {
-=======
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const triggeredOrders = await this.stopLossManager.checkPrice(update.symbol as Symbol, update.price);
@@ -44,7 +37,6 @@ export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
     for (const order of triggeredOrders) {
       console.log(`[PriceUpdateConsumer] Emitting stop-loss event for ${order.symbol} at ${order.price} (Index: ${index})`);
 
->>>>>>> feature/sl-simulation
       const stopLossEvent = {
         symbol: order.symbol,
         triggerPrice: order.price,
@@ -56,10 +48,6 @@ export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
       };
       const buffer = stopLossOrderSchema.toBuffer(stopLossEvent);
       this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.STOP_LOSS_ORDER, buffer });
-<<<<<<< HEAD
-    });
-=======
     }
->>>>>>> feature/sl-simulation
   }
 } 
