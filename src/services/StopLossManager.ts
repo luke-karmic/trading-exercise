@@ -60,7 +60,6 @@ export class StopLossManager extends EventEmitter {
         order.triggered = true;
         await new Promise(resolve => setTimeout(resolve, 50));
         console.log(`${RED}[StopLossManager] Order triggered for ${symbol} at ${currentPrice}${RESET}`);
-        process.exit(0);
         triggeredOrders.push(order);
 
         const stopLossPayload: StopLossOrderPayload = {
@@ -72,6 +71,7 @@ export class StopLossManager extends EventEmitter {
         };
 
         this.emit(EVENT_NAMES.STOP_LOSS_ORDER, stopLossPayload);
+        process.exit(0);
       }
     }
 
