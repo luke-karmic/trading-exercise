@@ -9,17 +9,6 @@ export abstract class BaseConsumer<T> extends EventEmitter {
     this.schema = schema;
   }
 
-<<<<<<< HEAD
-  public handleEvent(type: string, buffer: Buffer): void {
-    if (type !== this.getEventType()) return;
-
-    const event = this.schema.fromBuffer(buffer) as T;
-    this.handleEventData(event);
-  }
-
-  protected abstract getEventType(): string;
-  protected abstract handleEventData(event: T): void;
-=======
   public async handleEvent(type: string, buffer: Buffer): Promise<void> {
     if (type !== this.getEventType()) return;
 
@@ -38,5 +27,4 @@ export abstract class BaseConsumer<T> extends EventEmitter {
 
   protected abstract getEventType(): string;
   protected abstract handleEventData(event: T): Promise<void>;
->>>>>>> feature/sl-simulation
 } 
