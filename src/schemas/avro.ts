@@ -32,7 +32,6 @@ export const stopLossOrderSchema = avsc.Type.forSchema({
     { name: 'quantity', type: 'double' },
     { name: 'side', type: { type: 'enum', name: 'Side', symbols: [OrderSide.BUY, OrderSide.SELL] } },
     { name: 'orderId', type: 'string' },
-    { name: 'action', type: { type: 'enum', name: 'Action', symbols: ['CREATE', 'CANCEL'] } },
     { name: 'timestamp', type: 'long' }
   ]
 }); 
