@@ -41,7 +41,7 @@ export class StopLossManager extends EventEmitter {
     const triggeredOrders: StopLossOrder[] = [];
 
     symbolOrders.forEach(order => {
-      console.log('Checking price for order:', order);
+      console.log(`Checking price for order: ${order.symbol} ${order.price} ${order.side} ${order.quantity} ${order.triggered}`);
 
       if (order.triggered) return;
 

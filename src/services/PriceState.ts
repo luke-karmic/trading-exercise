@@ -1,6 +1,7 @@
 import { CONFIG, Symbol } from '../config/index';
-import { StopLossManager } from './StopLossManager';
 import { EventEmitter } from 'events';
+import { EVENT_NAMES } from '../types/events';
+import { priceUpdateSchema } from '../schemas/avro';
 
 interface PriceState {
   symbol: Symbol;
@@ -14,13 +15,11 @@ export class PriceStateManager extends EventEmitter {
   private state: Map<Symbol, PriceState> = new Map();
   private readonly defaultVolatility: number;
   private readonly defaultDrift: number;
-  private stopLossManager: StopLossManager;
 
   constructor() {
     super();
     this.defaultVolatility = Number(process.env.GBM_VOLATILITY) || 0.02;
     this.defaultDrift = Number(process.env.GBM_DRIFT) || 0.0001;
-    this.stopLossManager = new StopLossManager();
 
     CONFIG.symbols.forEach(symbolConfig => {
       this.state.set(symbolConfig.symbol, {
@@ -73,7 +72,14 @@ export class PriceStateManager extends EventEmitter {
       lastUpdate: now
     });
 
-    this.stopLossManager.checkPrice(symbol, nextPrice);
+    // Emit price update event
+    const priceUpdate = {
+      symbol,
+      price: nextPrice,
+      timestamp: now
+    };
+    const buffer = priceUpdateSchema.toBuffer(priceUpdate);
+    this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.PRICE_UPDATE, buffer });
 
     return nextPrice;
   }
