@@ -21,6 +21,9 @@ type ConsumerMap = {
  */
 export class EventConsumer extends EventEmitter {
   private consumers: Map<keyof ConsumerMap, ConsumerTypes>;
+  private processingEvents: Set<string> = new Set();
+  private eventQueue: Array<{ type: string; buffer: Buffer; id: string }> = [];
+  private isProcessing: boolean = false;
 
   constructor() {
     super();
@@ -32,9 +35,36 @@ export class EventConsumer extends EventEmitter {
   }
 
   public handleEvent(type: string, buffer: Buffer): void {
-    const consumer = this.consumers.get(type as keyof ConsumerMap);
-    if (consumer) {
-      consumer.handleEvent(type, buffer);
+    const eventId = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.eventQueue.push({ type, buffer, id: eventId });
+
+    if (!this.isProcessing) {
+      this.processQueue();
+    }
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing || this.eventQueue.length === 0) return;
+
+    this.isProcessing = true;
+    const batch = this.eventQueue.splice(0, this.eventQueue.length);
+
+    const promises = batch.map(({ type, buffer, id }) => {
+      const consumer = this.consumers.get(type as keyof ConsumerMap);
+      if (!consumer) return Promise.resolve();
+
+      this.processingEvents.add(id);
+      return consumer.handleEvent(type, buffer)
+        .finally(() => {
+          this.processingEvents.delete(id);
+        });
+    });
+
+    await Promise.all(promises);
+    this.isProcessing = false;
+
+    if (this.eventQueue.length > 0) {
+      this.processQueue();
     }
   }
 } 

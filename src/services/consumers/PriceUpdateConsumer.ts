@@ -4,6 +4,9 @@ import { priceUpdateSchema, stopLossOrderSchema } from '../../schemas/avro';
 import { StopLossManager } from '../StopLossManager';
 import { Symbol } from '../../config/index';
 
+const GREEN = '\x1b[32m';
+const RESET = '\x1b[0m';
+
 export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
   private stopLossManager: StopLossManager;
 
@@ -16,18 +19,24 @@ export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
     return EVENT_NAMES.PRICE_UPDATE;
   }
 
-  protected handleEventData(update: PriceUpdate): void {
-    console.log('Price update:', {
-      symbol: update.symbol,
+  protected async handleEventData(update: PriceUpdate): Promise<void> {
+    const index = Date.now() % 1000; // To Demonstrate parallel processing
+    console.log(`${GREEN}[PriceUpdateConsumer] Processing price update for ${update.symbol} (Index: ${index}):${RESET}`, {
       price: update.price,
       timestamp: new Date(update.timestamp).toISOString()
     });
 
-    // Check for stop-loss triggers
-    const triggeredOrders = this.stopLossManager.checkPrice(update.symbol as Symbol, update.price);
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Emit stop-loss events for each triggered order
-    triggeredOrders.forEach(order => {
+    const triggeredOrders = await this.stopLossManager.checkPrice(update.symbol as Symbol, update.price);
+
+    if (triggeredOrders.length > 0) {
+      console.log(`[PriceUpdateConsumer] Found ${triggeredOrders.length} triggered stop-loss orders for ${update.symbol} (Index: ${index})`);
+    }
+
+    for (const order of triggeredOrders) {
+      console.log(`[PriceUpdateConsumer] Emitting stop-loss event for ${order.symbol} at ${order.price} (Index: ${index})`);
+
       const stopLossEvent = {
         symbol: order.symbol,
         triggerPrice: order.price,
@@ -39,6 +48,6 @@ export class PriceUpdateConsumer extends BaseConsumer<PriceUpdate> {
       };
       const buffer = stopLossOrderSchema.toBuffer(stopLossEvent);
       this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.STOP_LOSS_ORDER, buffer });
-    });
+    }
   }
 } 

@@ -72,7 +72,6 @@ export class PriceStateManager extends EventEmitter {
       lastUpdate: now
     });
 
-    // Emit price update event
     const priceUpdate = {
       symbol,
       price: nextPrice,
