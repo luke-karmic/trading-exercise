@@ -35,6 +35,7 @@ export const CONFIG = {
     variationPercentage: Number(process.env.PRICE_VARIATION_PERCENTAGE) || 0.5,
     stopLossTriggerPercentage: Number(process.env.STOP_LOSS_TRIGGER_PERCENTAGE) || 5,
   },
+  eventBatchSize: Number(process.env.EVENT_BATCH_SIZE) || 1,
   symbols: [
     {
       symbol: Symbol.BTC_USD,
@@ -42,10 +43,8 @@ export const CONFIG = {
       volatility: Number(process.env.GBM_VOLATILITY),
       drift: Number(process.env.GBM_DRIFT),
       stopLossPrices: [
-        { price: 104195, side: OrderSide.BUY, quantity: 1.0 },
-        // { price: 55000, side: OrderSide.SELL, quantity: 0.5 },
-        // { price: 40000, side: OrderSide.BUY, quantity: 2.0 },
-        // { price: 60000, side: OrderSide.SELL, quantity: 1.0 }
+        { price: 104195, side: OrderSide.SELL, quantity: 1.0 },
+        { price: 104050, side: OrderSide.SELL, quantity: 0.5 },
       ]
     }
     // {

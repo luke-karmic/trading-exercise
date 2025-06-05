@@ -4,6 +4,10 @@ A TypeScript-based trading system simulator that demonstrates event-driven archi
 
 NOTE: Did not add tests, ESLINT, or prettier / perfections. I spent most of the time to display good architectural design.
 
+Added Batching and parallel processing, keep interval set low (~50) in order to ensure events aren't syncronous. as there is a fake Promise (50ms) to simulate processing time.
+
+The terminal will show RED and terminate the app once a stop loss is hit, or you can comment that line out to continue: `src/services/StopLossManager.ts:63`
+
 ## Architecture
 
 The system follows a clean, event-driven architecture with the following components:

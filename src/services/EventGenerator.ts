@@ -59,20 +59,28 @@ export class EventGenerator extends EventEmitter {
 
     this.intervalId = setInterval(() => {
       CONFIG.symbols.forEach(symbolConfig => {
-        const random = Math.random();
-        if (random < CONFIG.eventProbabilities.priceUpdate) {
-          const event = this.generateRandomPrice(symbolConfig);
-          const buffer = this.serializeEvent(event, priceUpdateSchema);
-          this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.PRICE_UPDATE, buffer } as EventPayload);
-        } else if (random < CONFIG.eventProbabilities.priceUpdate + CONFIG.eventProbabilities.tradeExecution) {
-          const event = this.generateRandomTrade(symbolConfig);
-          const buffer = this.serializeEvent(event, tradeExecutionSchema);
-          this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.TRADE_EXECUTION, buffer } as EventPayload);
-        } else {
-          const event = this.generateRandomStopLossOrder(symbolConfig);
-          const buffer = this.serializeEvent(event, stopLossOrderSchema);
-          this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.STOP_LOSS_ORDER, buffer } as EventPayload);
+        const batchPromises = [];
+        for (let i = 0; i < CONFIG.eventBatchSize; i++) {
+          batchPromises.push(
+            (async () => {
+              const random = Math.random();
+              if (random < CONFIG.eventProbabilities.priceUpdate) {
+                const event = this.generateRandomPrice(symbolConfig);
+                const buffer = this.serializeEvent(event, priceUpdateSchema);
+                this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.PRICE_UPDATE, buffer } as EventPayload);
+              } else if (random < CONFIG.eventProbabilities.priceUpdate + CONFIG.eventProbabilities.tradeExecution) {
+                const event = this.generateRandomTrade(symbolConfig);
+                const buffer = this.serializeEvent(event, tradeExecutionSchema);
+                this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.TRADE_EXECUTION, buffer } as EventPayload);
+              } else {
+                const event = this.generateRandomStopLossOrder(symbolConfig);
+                const buffer = this.serializeEvent(event, stopLossOrderSchema);
+                this.emit(EVENT_NAMES.EVENT, { type: EVENT_NAMES.STOP_LOSS_ORDER, buffer } as EventPayload);
+              }
+            })()
+          );
         }
+        Promise.all(batchPromises);
       });
     }, CONFIG.intervalTime);
   }
