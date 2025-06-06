@@ -12,16 +12,29 @@ export enum OrderSide {
   SELL = 'sell'
 }
 
-export interface SymbolConfig {
+export enum PositionDirection {
+  LONG = 'LONG',
+  SHORT = 'SHORT'
+}
+
+export interface PositionConfig {
+  id: string;
   symbol: Symbol;
-  basePrice: number;
-  volatility?: number;
-  drift?: number;
+  entryPrice: number;
+  positionDirection: PositionDirection;
+  quantity: number;
   stopLossPrices: {
     price: number;
     side: OrderSide;
     quantity: number;
   }[];
+}
+
+export interface SymbolPriceConfig {
+  symbol: Symbol;
+  basePrice: number;
+  volatility?: number;
+  drift?: number;
 }
 
 export const CONFIG = {
@@ -36,28 +49,44 @@ export const CONFIG = {
     stopLossTriggerPercentage: Number(process.env.STOP_LOSS_TRIGGER_PERCENTAGE) || 5,
   },
   eventBatchSize: Number(process.env.EVENT_BATCH_SIZE) || 1,
-  symbols: [
+  symbolPrices: [
     {
       symbol: Symbol.BTC_USD,
       basePrice: 104000,
       volatility: Number(process.env.GBM_VOLATILITY),
       drift: Number(process.env.GBM_DRIFT),
-      stopLossPrices: [
-        { price: 104195, side: OrderSide.SELL, quantity: 1.0 },
-        { price: 104050, side: OrderSide.SELL, quantity: 0.5 },
-      ]
-    }
+    },
     // {
     //   symbol: Symbol.ETH_USD,
     //   basePrice: 3000,
     //   volatility: 0.04,
     //   drift: 0.0001,
+    // }
+  ] as SymbolPriceConfig[],
+  positions: [
+    {
+      id: 'btc-long-1',
+      symbol: Symbol.BTC_USD,
+      entryPrice: 104000,
+      positionDirection: PositionDirection.LONG,
+      quantity: 1.5,
+      stopLossPrices: [
+        { price: 104050, side: OrderSide.BUY, quantity: 1.0 },
+        { price: 104100, side: OrderSide.BUY, quantity: 0.5 },
+      ]
+    },
+    // {
+    //   id: 'eth-short-1',
+    //   symbol: Symbol.ETH_USD,
+    //   entryPrice: 3000,
+    //   positionDirection: PositionDirection.SHORT,
+    //   quantity: 10.0,
     //   stopLossPrices: [
-    //     { price: 2700, side: OrderSide.BUY, quantity: 10.0 },
-    //     { price: 3300, side: OrderSide.SELL, quantity: 5.0 }
+    //     { price: 3300, side: OrderSide.BUY, quantity: 10.0 },
+    //     { price: 3150, side: OrderSide.BUY, quantity: 5.0 }
     //   ]
     // }
-  ] as SymbolConfig[]
+  ] as PositionConfig[]
 } as const;
 
 const totalProbability = CONFIG.eventProbabilities.priceUpdate +

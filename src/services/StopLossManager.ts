@@ -1,4 +1,4 @@
-import { CONFIG, Symbol, OrderSide } from '../config/index';
+import { CONFIG, Symbol, OrderSide, PositionDirection } from '../config/index';
 import { EventEmitter } from 'events';
 import { EVENT_NAMES, StopLossOrderPayload } from '../types/events';
 
@@ -6,15 +6,17 @@ const RED = '\x1b[31m';
 const RESET = '\x1b[0m';
 
 export interface StopLossOrder {
+  positionId: string;
   symbol: Symbol;
   price: number;
   side: OrderSide;
   quantity: number;
   triggered: boolean;
+  positionDirection: PositionDirection;
 }
 
 export class StopLossManager extends EventEmitter {
-  private orders: Map<Symbol, StopLossOrder[]>;
+  private orders: Map<string, StopLossOrder[]>;
 
   constructor() {
     super();
@@ -23,15 +25,17 @@ export class StopLossManager extends EventEmitter {
   }
 
   private initializeOrders(): void {
-    CONFIG.symbols.forEach(symbolConfig => {
+    CONFIG.positions.forEach(position => {
       this.orders.set(
-        symbolConfig.symbol,
-        symbolConfig.stopLossPrices.map(order => ({
-          symbol: symbolConfig.symbol,
+        position.id,
+        position.stopLossPrices.map(order => ({
+          positionId: position.id,
+          symbol: position.symbol,
           price: order.price,
           side: order.side,
           quantity: order.quantity,
-          triggered: false
+          triggered: false,
+          positionDirection: position.positionDirection
         }))
       );
     });
@@ -39,27 +43,22 @@ export class StopLossManager extends EventEmitter {
 
   public async checkPrice(symbol: Symbol, currentPrice: number): Promise<StopLossOrder[]> {
     console.log(`[StopLossManager] Checking prices for ${symbol} at ${currentPrice}`);
-    const symbolOrders = this.orders.get(symbol);
-    if (!symbolOrders) {
-      console.log(`[StopLossManager] No orders found for ${symbol}`);
-      return [];
-    }
-
     const triggeredOrders: StopLossOrder[] = [];
 
-    for (const order of symbolOrders) {
-      if (order.triggered) {
-        continue;
-      }
+    // Get all orders for this symbol in a single flat array
+    const symbolOrders = Array.from(this.orders.values())
+      .flat()
+      .filter(order => order.symbol === symbol && !order.triggered);
 
-      const isTriggered = order.side === OrderSide.BUY
-        ? currentPrice <= order.price
-        : currentPrice >= order.price;
+    for (const order of symbolOrders) {
+      const isTriggered = order.positionDirection === PositionDirection.LONG
+        ? (order.side === OrderSide.SELL ? currentPrice <= order.price : currentPrice >= order.price)
+        : (order.side === OrderSide.BUY ? currentPrice >= order.price : currentPrice <= order.price);
 
       if (isTriggered) {
         order.triggered = true;
         await new Promise(resolve => setTimeout(resolve, 50));
-        console.log(`${RED}[StopLossManager] Order triggered for ${symbol} at ${currentPrice}${RESET}`);
+        console.log(`${RED}[StopLossManager] Stop loss triggered for position ${order.positionId} at ${currentPrice} Qty: ${order.quantity}${RESET}`);
         triggeredOrders.push(order);
 
         const stopLossPayload: StopLossOrderPayload = {
@@ -71,7 +70,6 @@ export class StopLossManager extends EventEmitter {
         };
 
         this.emit(EVENT_NAMES.STOP_LOSS_ORDER, stopLossPayload);
-        process.exit(0);
       }
     }
 
@@ -79,10 +77,14 @@ export class StopLossManager extends EventEmitter {
   }
 
   public getActiveOrders(symbol: Symbol): StopLossOrder[] {
-    return this.orders.get(symbol)?.filter(order => !order.triggered) || [];
+    return Array.from(this.orders.values())
+      .flat()
+      .filter(order => !order.triggered && order.symbol === symbol);
   }
 
   public getAllOrders(symbol: Symbol): StopLossOrder[] {
-    return this.orders.get(symbol) || [];
+    return Array.from(this.orders.values())
+      .flat()
+      .filter(order => order.symbol === symbol);
   }
 } 

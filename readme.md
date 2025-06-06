@@ -8,6 +8,8 @@ Added Batching and parallel processing, keep interval set low (~50) in order to 
 
 The terminal will show RED and terminate the app once a stop loss is hit, or you can comment that line out to continue: `src/services/StopLossManager.ts:63`
 
+You can set positions at the `/src/config/index.ts#L66`. The log will show a RED line when a part of the position is closed.
+
 ## Architecture
 
 The system follows a clean, event-driven architecture with the following components:

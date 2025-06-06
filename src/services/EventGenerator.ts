@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { CONFIG, SymbolConfig, OrderSide } from '../config/index';
+import { CONFIG, OrderSide, SymbolPriceConfig } from '../config/index';
 import { PriceUpdate, TradeExecution, StopLossOrder, EVENT_NAMES, EventPayload } from '../types/events';
 import { priceUpdateSchema, tradeExecutionSchema, stopLossOrderSchema } from '../schemas/avro';
 import { PriceStateManager } from './PriceState';
@@ -13,7 +13,7 @@ export class EventGenerator extends EventEmitter {
     this.priceState = new PriceStateManager();
   }
 
-  private generateRandomPrice(symbol: SymbolConfig): PriceUpdate {
+  private generateRandomPrice(symbol: SymbolPriceConfig): PriceUpdate {
     const price = this.priceState.getNextPrice(symbol.symbol);
     return {
       symbol: symbol.symbol,
@@ -22,7 +22,7 @@ export class EventGenerator extends EventEmitter {
     };
   }
 
-  private generateRandomTrade(symbolConf: SymbolConfig): TradeExecution {
+  private generateRandomTrade(symbolConf: SymbolPriceConfig): TradeExecution {
     const price = this.priceState.getCurrentPrice(symbolConf.symbol);
     return {
       symbol: symbolConf.symbol,
@@ -33,7 +33,7 @@ export class EventGenerator extends EventEmitter {
     };
   }
 
-  private generateRandomStopLossOrder(symbolConf: SymbolConfig): StopLossOrder {
+  private generateRandomStopLossOrder(symbolConf: SymbolPriceConfig): StopLossOrder {
     const price = this.priceState.getCurrentPrice(symbolConf.symbol);
     return {
       symbol: symbolConf.symbol,
@@ -58,7 +58,7 @@ export class EventGenerator extends EventEmitter {
     }
 
     this.intervalId = setInterval(() => {
-      CONFIG.symbols.forEach(symbolConfig => {
+      CONFIG.symbolPrices.forEach(symbolConfig => {
         const batchPromises = [];
         for (let i = 0; i < CONFIG.eventBatchSize; i++) {
           batchPromises.push(

@@ -21,7 +21,7 @@ export class PriceStateManager extends EventEmitter {
     this.defaultVolatility = Number(process.env.GBM_VOLATILITY) || 0.02;
     this.defaultDrift = Number(process.env.GBM_DRIFT) || 0.0001;
 
-    CONFIG.symbols.forEach(symbolConfig => {
+    CONFIG.symbolPrices.forEach(symbolConfig => {
       this.state.set(symbolConfig.symbol, {
         symbol: symbolConfig.symbol,
         price: symbolConfig.basePrice,
