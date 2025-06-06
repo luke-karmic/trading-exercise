@@ -21,9 +21,10 @@ It also uses GBM (Geometric Brownian motion), which is a modelling formula for r
 ### Core Components
 
 - **PriceStateManager**: Manages price state using Geometric Brownian Motion (GBM) for realistic price simulations
-- **EventGenerator**: Generates various trading events (price updates, trades, stop-loss orders)
-- **EventConsumer**: Processes events through specialized consumers
+- **EventGenerator**: Generates various trading events (price updates, trades, stop-loss orders) with batching support
+- **EventConsumer**: Processes events through specialized consumers with parallel processing
 - **StopLossManager**: Manages stop-loss orders and their triggers
+- **PositionManager**: Tracks and manages trading positions and their quantities
 
 ### Event Types
 
@@ -33,12 +34,12 @@ It also uses GBM (Geometric Brownian motion), which is a modelling formula for r
 
 ### Consumer Architecture
 
-The system uses a generic-based consumer pattern:
+The system uses a generic-based consumer pattern with parallel processing:
 - `BaseConsumer<T>`: Abstract base class for all event consumers
 - Specialized consumers for each event type:
-  - `PriceUpdateConsumer`
-  - `TradeExecutionConsumer`
-  - `StopLossOrderConsumer`
+  - `PriceUpdateConsumer`: Handles price updates and triggers stop-loss checks
+  - `TradeExecutionConsumer`: Processes trade executions
+  - `StopLossOrderConsumer`: Manages stop-loss order events
 
 ## Configuration
 
@@ -52,6 +53,7 @@ INTERVAL_TIME=1000                    # Time between events in milliseconds
 PRICE_UPDATE_PROBABILITY=1.0          # Probability of price update events
 TRADE_EXECUTION_PROBABILITY=0         # Probability of trade execution events
 STOP_LOSS_ORDER_PROBABILITY=0         # Probability of stop-loss order events
+EVENT_BATCH_SIZE=1                    # Number of events to process in parallel
 
 # Price Movement Settings
 PRICE_VARIATION_PERCENTAGE=0.5        # Maximum price variation percentage
@@ -60,20 +62,22 @@ GBM_VOLATILITY=0.02                   # Volatility for Geometric Brownian Motion
 GBM_DRIFT=0.0001                      # Drift for Geometric Brownian Motion
 ```
 
-### Symbol Configuration
+### Position Configuration
 
-Symbols and their stop-loss orders are configured in `src/config/index.ts`:
+Positions and their stop-loss orders are configured in `src/config/index.ts`:
 
 ```typescript
 export const CONFIG = {
-  symbols: [
+  positions: [
     {
+      id: 'btc-long-1',
       symbol: Symbol.BTC_USD,
-      basePrice: 104000,
-      volatility: Number(process.env.GBM_VOLATILITY),
-      drift: Number(process.env.GBM_DRIFT),
+      entryPrice: 104000,
+      positionDirection: PositionDirection.LONG,
+      quantity: 1.5,
       stopLossPrices: [
-        { price: 104195, side: OrderSide.BUY, quantity: 1.0 }
+        { price: 104050, side: OrderSide.BUY, quantity: 1.0 },
+        { price: 104100, side: OrderSide.BUY, quantity: 0.5 },
       ]
     }
   ]
@@ -86,14 +90,21 @@ export const CONFIG = {
    - `PriceStateManager` generates new prices using GBM
    - Emits price update events
 
-2. **Stop-Loss Processing**:
+2. **Event Processing**:
+   - `EventGenerator` batches events based on `EVENT_BATCH_SIZE`
+   - Events are processed in parallel by specialized consumers
+   - Each consumer has a simulated processing delay (50ms) to demonstrate parallel execution
+
+3. **Stop-Loss Processing**:
    - `PriceUpdateConsumer` receives price updates
    - Checks for stop-loss triggers
    - Emits stop-loss order events when triggered
+   - `PositionManager` updates position quantities when stop-losses are hit
 
-3. **Event Consumption**:
-   - Specialized consumers process their respective events
-   - Events are logged and can trigger further actions
+4. **Position Management**:
+   - Tracks total and remaining quantities for each position
+   - Automatically closes positions when fully executed
+   - Terminates the application when all positions are closed
 
 ## Running the Application
 
@@ -144,6 +155,8 @@ src/
 - Follow the event-driven architecture pattern
 - Maintain separation of concerns between components
 - Use proper error handling and logging
+- Keep interval time low (~50ms) to ensure events aren't synchronous
+- Use batching for better performance with parallel processing
 
 ## License
 
