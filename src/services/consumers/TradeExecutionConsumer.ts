@@ -11,7 +11,7 @@ export class TradeExecutionConsumer extends BaseConsumer<TradeExecution> {
     return EVENT_NAMES.TRADE_EXECUTION;
   }
 
-  protected handleEventData(trade: TradeExecution): void {
+  protected async handleEventData(trade: TradeExecution): Promise<void> {
     console.log('Trade execution:', {
       symbol: trade.symbol,
       price: trade.price,
