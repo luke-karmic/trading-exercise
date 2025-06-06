@@ -49,17 +49,17 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Simulation Settings
-INTERVAL_TIME=1000                    # Time between events in milliseconds
+INTERVAL_TIME=40                    # Time between events in milliseconds
 PRICE_UPDATE_PROBABILITY=1.0          # Probability of price update events
 TRADE_EXECUTION_PROBABILITY=0         # Probability of trade execution events
 STOP_LOSS_ORDER_PROBABILITY=0         # Probability of stop-loss order events
-EVENT_BATCH_SIZE=1                    # Number of events to process in parallel
+EVENT_BATCH_SIZE=1                    # Number of events to process in parallel (1 at a time due to low interval)
 
 # Price Movement Settings
-PRICE_VARIATION_PERCENTAGE=0.5        # Maximum price variation percentage
+PRICE_VARIATION_PERCENTAGE=20        # Maximum price variation percentage
 STOP_LOSS_TRIGGER_PERCENTAGE=5        # Percentage for stop-loss triggers
-GBM_VOLATILITY=0.02                   # Volatility for Geometric Brownian Motion
-GBM_DRIFT=0.0001                      # Drift for Geometric Brownian Motion
+GBM_VOLATILITY=2                   # Volatility for Geometric Brownian Motion
+GBM_DRIFT=0.2                      # Drift for Geometric Brownian Motion
 ```
 
 ### Position Configuration
