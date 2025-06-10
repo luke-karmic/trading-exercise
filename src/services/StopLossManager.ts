@@ -45,7 +45,6 @@ export class StopLossManager extends EventEmitter {
     console.log(`[StopLossManager] Checking prices for ${symbol} at ${currentPrice}`);
     const triggeredOrders: StopLossOrder[] = [];
 
-    // Get all orders for this symbol in a single flat array
     const symbolOrders = Array.from(this.orders.values())
       .flat()
       .filter(order => order.symbol === symbol && !order.triggered);
